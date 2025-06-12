@@ -1,4 +1,4 @@
-public interface IPlayerStats
+public interface ICharacterStats
 {
     float MoveSpeed { get; }
     float AttackDamage { get; }

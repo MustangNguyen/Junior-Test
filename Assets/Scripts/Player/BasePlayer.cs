@@ -1,7 +1,7 @@
 using UnityEngine;
 using System;
 
-public class BasePlayer : MonoBehaviour, IDamageable, IPlayerStats
+public class BasePlayer : MonoBehaviour, IDamageable, ICharacterStats
 {
     [Header("Basic Stats")]
     [SerializeField] protected float moveSpeed = 5f;
@@ -9,7 +9,7 @@ public class BasePlayer : MonoBehaviour, IDamageable, IPlayerStats
     [SerializeField] protected float attackSpeed = 1f;
     [SerializeField] protected float defense = 0f;
 
-    // IPlayerStats Implementation
+    // ICharacterStats Implementation
     public float MoveSpeed => moveSpeed;
     public float AttackDamage => attackDamage;
     public float AttackSpeed => attackSpeed;

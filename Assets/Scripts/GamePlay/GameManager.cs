@@ -60,7 +60,7 @@ public class GameManager : Singleton<GameManager>
     private void Start()
     {
         // Initialize game with MainMenu state
-        ChangeState(GameState.MainMenu);
+        ChangeState(GameState.Playing);
     }
 
     public void ChangeState(GameState newState)
@@ -69,6 +69,9 @@ public class GameManager : Singleton<GameManager>
         if (exitStateActions.TryGetValue(CurrentState, out Action exitAction))
         {
             exitAction?.Invoke();
+        }
+        else{
+            Debug.LogWarning("No exit action found for state: " + CurrentState);
         }
 
         // Enter new state

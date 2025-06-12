@@ -57,6 +57,12 @@ public class GameManager : Singleton<GameManager>
         };
     }
 
+    protected override void Awake()
+    {
+        base.Awake();
+        InitializeStateActions();
+    }
+
     private void Start()
     {
         // Initialize game with MainMenu state

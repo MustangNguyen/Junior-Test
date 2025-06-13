@@ -1,5 +1,6 @@
 using UnityEngine;
 using Lean.Pool;
+using System.Collections.Generic;
 
 public class Bullet : MonoBehaviour
 {
@@ -13,10 +14,28 @@ public class Bullet : MonoBehaviour
     private Rigidbody2D rb;
     private int currentBounces;
     private int currentPenetrations;
+    private HashSet<Collider2D> penetratedEnemies = new HashSet<Collider2D>();
+    private BoxCollider2D mainCollider;
+    private BulletDetector detector;
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+        mainCollider = GetComponent<BoxCollider2D>();
+        detector = GetComponentInChildren<BulletDetector>();
+        
+        // Configure Rigidbody2D
+        if (rb != null)
+        {
+            rb.gravityScale = 0f;
+            rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+            rb.interpolation = RigidbodyInterpolation2D.Interpolate;
+        }
+
+        if (detector != null)
+        {
+            detector.Initialize(this);
+        }
     }
 
     public void Initialize(AmmoDataSO data, Vector2 dir)
@@ -30,6 +49,7 @@ public class Bullet : MonoBehaviour
         direction = dir.normalized;
         currentBounces = 0;
         currentPenetrations = 0;
+        penetratedEnemies.Clear();
 
         // Set rotation to match direction
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
@@ -45,19 +65,28 @@ public class Bullet : MonoBehaviour
         Invoke(nameof(Despawn), lifetime);
     }
 
+    public void SetTriggerMode(bool isTrigger)
+    {
+        if (mainCollider != null)
+        {
+            mainCollider.isTrigger = isTrigger;
+        }
+    }
+
     private void OnCollisionEnter2D(Collision2D collision)
     {
         ContactPoint2D contact = collision.GetContact(0);
         Vector2 normal = contact.normal;
 
-        // Check if hit obstacle
+        // Handle obstacle collision
         if (collision.gameObject.CompareTag("Obstacle"))
         {
             if (currentBounces < maxBounces)
             {
-                // Calculate reflection vector using the law of reflection: R = I - 2(N·I)N
-                Vector2 reflection = direction - 2 * Vector2.Dot(normal, direction) * normal;
-                direction = reflection.normalized;
+                // Calculate reflection using the law of reflection: R = I - 2(N·I)N
+                float dotProduct = Vector2.Dot(normal, direction);
+                direction = direction - 2 * dotProduct * normal;
+                direction.Normalize();
                 currentBounces++;
 
                 // Update rotation to match new direction
@@ -81,37 +110,42 @@ public class Bullet : MonoBehaviour
                 Despawn();
             }
         }
-        // Check if hit enemy
-        else if (collision.gameObject.CompareTag("Enemy"))
-        {
-            // Deal damage to enemy
-            IDamageable damageable = collision.gameObject.GetComponent<IDamageable>();
-            if (damageable != null)
-            {
-                damageable.TakeDamage(damage);
-            }
+    }
 
-            // Spawn impact effect
-            if (ammoData.impactEffect != null)
-            {
-                LeanPool.Spawn(ammoData.impactEffect, contact.point, Quaternion.identity);
-            }
-
-            // Check if can penetrate
-            if (currentPenetrations < maxPenetration)
-            {
-                currentPenetrations++;
-                // Ignore collision with this enemy
-                Physics2D.IgnoreCollision(GetComponent<Collider2D>(), collision.collider);
-            }
-            else
-            {
-                Despawn();
-            }
-        }
-        else
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        // Handle enemy collision
+        if (other.CompareTag("Enemy"))
         {
-            Despawn();
+            // Only process if we haven't penetrated this enemy before
+            if (!penetratedEnemies.Contains(other))
+            {
+                // Deal damage to enemy
+                IDamageable damageable = other.GetComponent<IDamageable>();
+                if (damageable != null)
+                {
+                    damageable.TakeDamage(damage);
+                }
+
+                // Spawn impact effect
+                if (ammoData.impactEffect != null)
+                {
+                    LeanPool.Spawn(ammoData.impactEffect, other.transform.position, Quaternion.identity);
+                }
+
+                // Add to penetrated enemies list
+                penetratedEnemies.Add(other);
+
+                // Check if can penetrate more enemies
+                if (currentPenetrations < maxPenetration)
+                {
+                    currentPenetrations++;
+                }
+                else
+                {
+                    Despawn();
+                }
+            }
         }
     }
 
@@ -123,5 +157,6 @@ public class Bullet : MonoBehaviour
     private void OnDisable()
     {
         CancelInvoke(nameof(Despawn));
+        penetratedEnemies.Clear();
     }
 } 

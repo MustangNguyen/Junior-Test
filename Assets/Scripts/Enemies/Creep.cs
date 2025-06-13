@@ -19,11 +19,16 @@ public class Creep : BaseEnemy
     private bool canAttack = true;
     private Vector2 moveDirection;
     private float currentSpeed;
+    private Transform player;
+    private float lastAttackTime;
+    private bool isAttacking;
 
     protected override void Awake()
     {
         base.Awake();
         moveSpeed = creepMoveSpeed;
+        player = GameObject.FindGameObjectWithTag("Player")?.transform;
+        animator = GetComponent<Animator>();
     }
 
     private void Start()
@@ -48,38 +53,35 @@ public class Creep : BaseEnemy
             rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
             rb.interpolation = RigidbodyInterpolation2D.Interpolate;
         }
-
-        // Find player as target
-        target = GameObject.FindGameObjectWithTag("Player")?.transform;
     }
 
     private void Update()
     {
-        if (target == null) return;
+        if (isDead || player == null) return;
 
-        float distanceToTarget = Vector2.Distance(transform.position, target.position);
+        float distanceToPlayer = Vector2.Distance(transform.position, player.position);
 
-        // Check if target is in detection range
-        if (distanceToTarget <= detectionRange)
+        // Check if player is in detection range
+        if (distanceToPlayer <= enemyData.detectionRange)
         {
-            // Calculate direction to target
-            moveDirection = (target.position - transform.position).normalized;
-
+            // Calculate direction to player
+            moveDirection = (player.position - transform.position).normalized;
 
             // Check if in attack range
-            if (distanceToTarget <= attackRange && canAttack)
+            if (distanceToPlayer <= enemyData.attackRange)
             {
-                Attack();
+                currentSpeed = 0f;
+                TryAttack();
             }
             else
             {
-                // Move towards target
+                // Move towards player
                 currentSpeed = moveSpeed;
             }
         }
         else
         {
-            // Stop moving if target is out of range
+            // Stop moving if player is out of range
             moveDirection = Vector2.zero;
             currentSpeed = 0f;
         }
@@ -88,7 +90,7 @@ public class Creep : BaseEnemy
         if (animator != null)
         {
             animator.SetFloat("Speed", currentSpeed);
-            animator.SetBool("IsAttacking", !canAttack);
+            animator.SetBool("IsAttacking", isAttacking);
         }
     }
 
@@ -100,28 +102,29 @@ public class Creep : BaseEnemy
         }
     }
 
-    private void Attack()
+    private void TryAttack()
     {
-        if (!canAttack) return;
-
-        canAttack = false;
-        currentSpeed = 0f;
-
-        // Deal damage to target if it has IDamageable component
-        IDamageable damageable = target.GetComponent<IDamageable>();
-        if (damageable != null)
+        if (Time.time >= lastAttackTime + enemyData.attackCooldown)
         {
-            damageable.TakeDamage(attackDamage);
+            Attack();
+            lastAttackTime = Time.time;
         }
-
-        // Start attack cooldown
-        StartCoroutine(AttackCooldown());
     }
 
-    private IEnumerator AttackCooldown()
+    private void Attack()
     {
-        yield return new WaitForSeconds(attackCooldown);
-        canAttack = true;
+        if (isAttacking) return;
+
+        isAttacking = true;
+
+        // Deal damage to player if it has IDamageable component
+        IDamageable damageable = player.GetComponent<IDamageable>();
+        if (damageable != null)
+        {
+            damageable.TakeDamage(enemyData.attackDamage);
+        }
+
+        isAttacking = false;
     }
 
     private void OnDrawGizmosSelected()
@@ -137,18 +140,21 @@ public class Creep : BaseEnemy
 
     public override void OnMove(Vector2 direction)
     {
-        moveDirection = direction;
-        currentSpeed = moveSpeed;
+        if (direction != Vector2.zero)
+        {
+            // Move in 2D space
+            transform.position += new Vector3(direction.x, direction.y, 0) * moveSpeed * Time.deltaTime;
+            
+            // Rotate to face movement direction
+            float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+            transform.rotation = Quaternion.Euler(0, 0, angle);
+        }
     }
 
     public override void Stop()
     {
         moveDirection = Vector2.zero;
         currentSpeed = 0f;
-        if (rb != null)
-        {
-            rb.velocity = Vector2.zero;
-        }
     }
 
     public override void Rotate(Vector2 direction)

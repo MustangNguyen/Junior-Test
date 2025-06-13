@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d8d5dda8028a14c4f8803a8ab3fbf40f, type: 3}
+  m_Name: Enemy Data
+  m_EditorClassIdentifier: 
+  maxHealth: 100
+  deathEffect: {fileID: 0}
+  hitEffect: {fileID: 0}
+  moveSpeed: 5
+  rotationSpeed: 10
+  attackDamage: 10
+  attackCooldown: 1
+  attackRange: 2
+  detectionRange: 10
+  enemySprite: {fileID: 0}
+  animatorController: {fileID: 0}

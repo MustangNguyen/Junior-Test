@@ -3,10 +3,8 @@ using UnityEngine.Events;
 
 public class BaseEnemy : MonoBehaviour, IMovable, IDamageable
 {
-    [Header("Health Settings")]
-    [SerializeField] protected float maxHealth = 100f;
-    [SerializeField] protected GameObject deathEffect;
-    [SerializeField] protected GameObject hitEffect;
+    [Header("Enemy Data")]
+    [SerializeField] protected EnemyDataSO enemyData;
     [SerializeField] protected EnemyHealthBar healthBar;
 
     protected float currentHealth;
@@ -19,13 +17,32 @@ public class BaseEnemy : MonoBehaviour, IMovable, IDamageable
 
     protected virtual void Awake()
     {
-        currentHealth = maxHealth;
+        if (enemyData == null)
+        {
+            Debug.LogError($"EnemyDataSO is missing on {gameObject.name}!");
+            return;
+        }
+
+        // Initialize health
+        currentHealth = enemyData.maxHealth;
+        moveSpeed = enemyData.moveSpeed;
 
         // Initialize health bar if available
         if (healthBar != null)
         {
             healthBar.Initialize(transform);
             healthBar.UpdateHealthBar(1f); // Full health at start
+        }
+
+        // Initialize visual components
+        if (TryGetComponent<SpriteRenderer>(out var spriteRenderer))
+        {
+            spriteRenderer.sprite = enemyData.enemySprite;
+        }
+
+        if (TryGetComponent<Animator>(out var animator))
+        {
+            animator.runtimeAnimatorController = enemyData.animatorController;
         }
     }
 
@@ -36,19 +53,19 @@ public class BaseEnemy : MonoBehaviour, IMovable, IDamageable
         currentHealth -= damage;
         
         // Spawn hit effect
-        if (hitEffect != null)
+        if (enemyData.hitEffect != null)
         {
-            Instantiate(hitEffect, transform.position, Quaternion.identity);
+            Instantiate(enemyData.hitEffect, transform.position, Quaternion.identity);
         }
 
         // Update health bar
         if (healthBar != null)
         {
-            healthBar.UpdateHealthBar(currentHealth / maxHealth);
+            healthBar.UpdateHealthBar(currentHealth / enemyData.maxHealth);
         }
 
         // Invoke take damage event with health percentage
-        onTakeDamage?.Invoke(currentHealth / maxHealth);
+        onTakeDamage?.Invoke(currentHealth / enemyData.maxHealth);
         
         if (currentHealth <= 0)
         {
@@ -68,9 +85,9 @@ public class BaseEnemy : MonoBehaviour, IMovable, IDamageable
         isDead = true;
         
         // Spawn death effect
-        if (deathEffect != null)
+        if (enemyData.deathEffect != null)
         {
-            Instantiate(deathEffect, transform.position, Quaternion.identity);
+            Instantiate(enemyData.deathEffect, transform.position, Quaternion.identity);
         }
 
         // Invoke death event

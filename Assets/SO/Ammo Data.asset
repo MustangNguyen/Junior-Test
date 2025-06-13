@@ -16,7 +16,8 @@ MonoBehaviour:
   ammoModel: {fileID: 3461530662331027271, guid: 48bdce34483873f4a85cadf4ab26c8e6, type: 3}
   damage: 10
   speed: 10
-  lifetime: 2
+  lifetime: 5
+  maxBounces: 3
   impactSound: {fileID: 0}
   impactEffect: {fileID: 0}
   impactDecal: {fileID: 0}

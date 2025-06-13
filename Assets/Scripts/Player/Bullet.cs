@@ -10,6 +10,7 @@ public class Bullet : MonoBehaviour
     private float lifetime;
     private float currentLifetime;
     private Rigidbody2D rb;
+    private int currentBounces = 0;
 
     public void Initialize(AmmoDataSO data, Vector3 dir)
     {
@@ -19,6 +20,7 @@ public class Bullet : MonoBehaviour
         damage = data.damage;
         lifetime = data.lifetime;
         currentLifetime = 0f;
+        currentBounces = 0;
         
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
         transform.rotation = Quaternion.Euler(0, 0, angle);
@@ -37,6 +39,7 @@ public class Bullet : MonoBehaviour
     private void OnEnable()
     {
         currentLifetime = 0f;
+        currentBounces = 0;
         if (rb != null)
         {
             rb.velocity = direction * speed;
@@ -52,9 +55,15 @@ public class Bullet : MonoBehaviour
         }
     }
 
-    private void OnTriggerEnter2D(Collider2D other)
+    private void OnCollisionEnter2D(Collision2D collision)
     {
-        IDamageable damageable = other.GetComponent<IDamageable>();
+        if (collision.gameObject.CompareTag("Obstacle"))
+        {
+            HandleObstacleCollision(collision);
+            return;
+        }
+
+        IDamageable damageable = collision.gameObject.GetComponent<IDamageable>();
         if (damageable != null)
         {
             damageable.TakeDamage(damage);
@@ -67,11 +76,8 @@ public class Bullet : MonoBehaviour
 
         if (ammoData.impactDecal != null)
         {
-            RaycastHit2D hit = Physics2D.Raycast(transform.position, -direction, 0.1f);
-            if (hit.collider != null)
-            {
-                LeanPool.Spawn(ammoData.impactDecal, hit.point, Quaternion.Euler(0, 0, Mathf.Atan2(hit.normal.y, hit.normal.x) * Mathf.Rad2Deg));
-            }
+            ContactPoint2D contact = collision.GetContact(0);
+            LeanPool.Spawn(ammoData.impactDecal, contact.point, Quaternion.Euler(0, 0, Mathf.Atan2(contact.normal.y, contact.normal.x) * Mathf.Rad2Deg));
         }
 
         if (ammoData.impactSound != null)
@@ -80,6 +86,52 @@ public class Bullet : MonoBehaviour
         }
 
         Despawn();
+    }
+
+    private void HandleObstacleCollision(Collision2D collision)
+    {
+        if (currentBounces >= ammoData.maxBounces)
+        {
+            Despawn();
+            return;
+        }
+
+        // Get the normal from the collision
+        ContactPoint2D contact = collision.GetContact(0);
+        Vector2 normal = contact.normal;
+        
+        // Calculate reflection using the surface normal
+        float dotProduct = Vector2.Dot(normal, direction);
+        direction = direction - 2 * dotProduct * normal;
+        direction.Normalize();
+        
+        // Update rotation to match new direction
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        transform.rotation = Quaternion.Euler(0, 0, angle);
+
+        // Apply new velocity
+        if (rb != null)
+        {
+            rb.velocity = direction * speed;
+        }
+
+        // Spawn impact effects
+        if (ammoData.impactEffect != null)
+        {
+            LeanPool.Spawn(ammoData.impactEffect, contact.point, Quaternion.identity);
+        }
+
+        if (ammoData.impactDecal != null)
+        {
+            LeanPool.Spawn(ammoData.impactDecal, contact.point, Quaternion.Euler(0, 0, Mathf.Atan2(normal.y, normal.x) * Mathf.Rad2Deg));
+        }
+
+        if (ammoData.impactSound != null)
+        {
+            AudioSource.PlayClipAtPoint(ammoData.impactSound, contact.point);
+        }
+
+        currentBounces++;
     }
 
     private void Despawn()

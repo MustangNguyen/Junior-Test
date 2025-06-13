@@ -11,6 +11,7 @@ public class AmmoDataSO : ScriptableObject
     public float damage;
     public float speed;
     public float lifetime;
+    public int maxBounces = 3;
     
     [Header("Effects")]
     public AudioClip impactSound;

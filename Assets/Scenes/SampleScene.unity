@@ -449,9 +449,9 @@ GameObject:
   - component: {fileID: 1334207727}
   - component: {fileID: 1334207726}
   - component: {fileID: 1334207725}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Game Map
-  m_TagString: Untagged
+  m_TagString: Obstacle
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -490,7 +490,7 @@ Rigidbody2D:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 256
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -5197,6 +5197,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveSpeed: 5
   sprintSpeed: 8
+  acceleration: 50
+  deceleration: 50
+  rotationSpeed: 10
 --- !u!212 &1618811514
 SpriteRenderer:
   m_ObjectHideFlags: 0

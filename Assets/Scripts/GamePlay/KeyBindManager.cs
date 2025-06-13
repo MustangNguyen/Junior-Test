@@ -1,8 +1,7 @@
 using UnityEngine;
 
-public class KeyBindManager : MonoBehaviour
+public class KeyBindManager : Singleton<KeyBindManager>
 {
-    public static KeyBindManager Instance { get; private set; }
 
     [Header("Player Movement Keys")]
     public KeyCode moveUp = KeyCode.W;
@@ -18,20 +17,6 @@ public class KeyBindManager : MonoBehaviour
     public KeyCode aim = KeyCode.Mouse1;
     public KeyCode reload = KeyCode.R;
     public KeyCode switchWeapon = KeyCode.Q;
-
-    private void Awake()
-    {
-        // Singleton pattern implementation
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
-    }
 
     // Method to check if a movement key is pressed
     public bool IsMovementKeyPressed()

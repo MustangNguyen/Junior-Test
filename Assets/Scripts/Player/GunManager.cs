@@ -12,7 +12,7 @@ public class GunManager : MonoBehaviour
     [SerializeField] private float accuracyPenaltyMultiplier = 0.5f;
 
     private Dictionary<string, GunDataSO> gunDatabase = new Dictionary<string, GunDataSO>();
-    private CharacterController playerController;
+    private Dictionary<AmmoDataSO, int> ammoInventory = new Dictionary<AmmoDataSO, int>();
     private Vector3 lastPosition;
     private bool isMoving;
 
@@ -33,13 +33,6 @@ public class GunManager : MonoBehaviour
             SwitchGun(availableGuns[0].gunName);
         }
 
-        // Get player controller reference
-        playerController = GetComponentInParent<CharacterController>();
-        if (playerController == null)
-        {
-            Debug.LogWarning("PlayerController not found in parent hierarchy!");
-        }
-
         lastPosition = transform.position;
     }
 
@@ -50,23 +43,20 @@ public class GunManager : MonoBehaviour
 
     private void TrackMovement()
     {
-        if (playerController != null)
+        // Calculate movement
+        Vector3 currentPosition = transform.position;
+        float movement = Vector3.Distance(currentPosition, lastPosition);
+        
+        // Update movement state
+        isMoving = movement > movementThreshold;
+        
+        // Apply movement effects to current gun if needed
+        if (currentGun != null)
         {
-            // Calculate movement
-            Vector3 currentPosition = transform.position;
-            float movement = Vector3.Distance(currentPosition, lastPosition);
-            
-            // Update movement state
-            isMoving = movement > movementThreshold;
-            
-            // Apply movement effects to current gun if needed
-            if (currentGun != null)
-            {
-                currentGun.SetMovementPenalty(isMoving ? accuracyPenaltyMultiplier : 1f);
-            }
-
-            lastPosition = currentPosition;
+            currentGun.SetMovementPenalty(isMoving ? accuracyPenaltyMultiplier : 1f);
         }
+
+        lastPosition = currentPosition;
     }
 
     public void SwitchGun(string gunName)
@@ -106,5 +96,34 @@ public class GunManager : MonoBehaviour
     public bool IsPlayerMoving()
     {
         return isMoving;
+    }
+
+    // Ammo Management
+    public bool HasAmmo(AmmoDataSO ammoData)
+    {
+        return ammoInventory.ContainsKey(ammoData) && ammoInventory[ammoData] > 0;
+    }
+
+    public bool UseAmmo(AmmoDataSO ammoData, int amount = 1)
+    {
+        if (!HasAmmo(ammoData) || ammoInventory[ammoData] < amount)
+            return false;
+
+        ammoInventory[ammoData] -= amount;
+        return true;
+    }
+
+    public void AddAmmo(AmmoDataSO ammoData, int amount)
+    {
+        if (!ammoInventory.ContainsKey(ammoData))
+        {
+            ammoInventory[ammoData] = 0;
+        }
+        ammoInventory[ammoData] += amount;
+    }
+
+    public int GetAmmoCount(AmmoDataSO ammoData)
+    {
+        return ammoInventory.ContainsKey(ammoData) ? ammoInventory[ammoData] : 0;
     }
 } 

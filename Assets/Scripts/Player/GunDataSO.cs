@@ -13,6 +13,9 @@ public class GunDataSO : ScriptableObject
     public int maxAmmo;
     public float reloadTime;
     
+    [Header("Ammo")]
+    public AmmoDataSO ammoType;
+    
     [Header("Effects")]
     public AudioClip shootSound;
     public AudioClip reloadSound;

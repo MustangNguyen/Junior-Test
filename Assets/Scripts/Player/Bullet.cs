@@ -4,7 +4,7 @@ using Lean.Pool;
 public class Bullet : MonoBehaviour
 {
     private AmmoDataSO ammoData;
-    private Vector3 direction;
+    private Vector2 direction;
     private float speed;
     private float damage;
     private float lifetime;
@@ -13,14 +13,14 @@ public class Bullet : MonoBehaviour
     public void Initialize(AmmoDataSO data, Vector3 dir)
     {
         ammoData = data;
-        direction = dir.normalized;
+        direction = new Vector2(dir.x, dir.y).normalized;
         speed = data.speed;
         damage = data.damage;
         lifetime = data.lifetime;
         currentLifetime = 0f;
-
-        // Reset rotation to match direction
-        transform.rotation = Quaternion.LookRotation(direction);
+        
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        transform.rotation = Quaternion.Euler(0, 0, angle);
     }
 
     private void OnEnable()
@@ -30,10 +30,8 @@ public class Bullet : MonoBehaviour
 
     private void Update()
     {
-        // Move bullet
-        transform.position += direction * speed * Time.deltaTime;
+        transform.position += new Vector3(direction.x, direction.y, 0) * speed * Time.deltaTime;
 
-        // Check lifetime
         currentLifetime += Time.deltaTime;
         if (currentLifetime >= lifetime)
         {
@@ -41,16 +39,14 @@ public class Bullet : MonoBehaviour
         }
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void OnTriggerEnter2D(Collider2D other)
     {
-        // Check if hit something that can take damage
         IDamageable damageable = other.GetComponent<IDamageable>();
         if (damageable != null)
         {
             damageable.TakeDamage(damage);
         }
 
-        // Spawn impact effects
         if (ammoData.impactEffect != null)
         {
             LeanPool.Spawn(ammoData.impactEffect, transform.position, Quaternion.identity);
@@ -58,15 +54,13 @@ public class Bullet : MonoBehaviour
 
         if (ammoData.impactDecal != null)
         {
-            // Spawn decal on the surface
-            RaycastHit hit;
-            if (Physics.Raycast(transform.position, -direction, out hit, 0.1f))
+            RaycastHit2D hit = Physics2D.Raycast(transform.position, -direction, 0.1f);
+            if (hit.collider != null)
             {
-                LeanPool.Spawn(ammoData.impactDecal, hit.point, Quaternion.LookRotation(hit.normal));
+                LeanPool.Spawn(ammoData.impactDecal, hit.point, Quaternion.Euler(0, 0, Mathf.Atan2(hit.normal.y, hit.normal.x) * Mathf.Rad2Deg));
             }
         }
 
-        // Play impact sound
         if (ammoData.impactSound != null)
         {
             AudioSource.PlayClipAtPoint(ammoData.impactSound, transform.position);

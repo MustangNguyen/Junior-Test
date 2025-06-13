@@ -24,6 +24,8 @@ public class GunManager : MonoBehaviour
             if (!gunDatabase.ContainsKey(gunData.gunName))
             {
                 gunDatabase.Add(gunData.gunName, gunData);
+                // Add initial ammo for each gun type
+                AddAmmo(gunData.ammoType, 1000);
             }
         }
 
@@ -101,7 +103,10 @@ public class GunManager : MonoBehaviour
     // Ammo Management
     public bool HasAmmo(AmmoDataSO ammoData)
     {
-        return ammoInventory.ContainsKey(ammoData) && ammoInventory[ammoData] > 0;
+        bool hasAmmo = ammoInventory.ContainsKey(ammoData) && ammoInventory[ammoData] > 0;
+        int ammoCount = ammoInventory.ContainsKey(ammoData) ? ammoInventory[ammoData] : 0;
+        // Debug.Log($"HasAmmo check: ammoType={ammoData.ammoName}, hasAmmo={hasAmmo}, count={ammoCount}");
+        return hasAmmo;
     }
 
     public bool UseAmmo(AmmoDataSO ammoData, int amount = 1)
@@ -120,6 +125,7 @@ public class GunManager : MonoBehaviour
             ammoInventory[ammoData] = 0;
         }
         ammoInventory[ammoData] += amount;
+        Debug.Log($"Added ammo: type={ammoData.ammoName}, amount={amount}, total={ammoInventory[ammoData]}");
     }
 
     public int GetAmmoCount(AmmoDataSO ammoData)

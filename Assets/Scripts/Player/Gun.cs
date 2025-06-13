@@ -9,10 +9,6 @@ public class Gun : MonoBehaviour
     [SerializeField] private GameObject bulletPrefab;
     [SerializeField] private Camera mainCamera;
     
-    [Header("Debug")]
-    [SerializeField] private bool showDebug = true;
-    [SerializeField] private Color debugLineColor = Color.red;
-    
     private int currentAmmo;
     private bool isReloading;
     private float nextFireTime;
@@ -41,55 +37,25 @@ public class Gun : MonoBehaviour
         if (mainCamera == null)
         {
             mainCamera = Camera.main;
-            Debug.Log("Using main camera: " + (mainCamera != null ? mainCamera.name : "null"));
         }
         InitializeGun(gunDataSO);
     }
 
     private void Update()
     {
-        // Rotate gun to follow mouse
         if (mainCamera != null)
         {
-            // Get mouse position in world space
             Vector3 mousePos = Input.mousePosition;
             mousePos.z = mainCamera.transform.position.y - transform.position.y;
             Vector3 worldPos = mainCamera.ScreenToWorldPoint(mousePos);
-
-            if (showDebug)
-            {
-                Debug.Log($"Mouse Screen Position: {Input.mousePosition}");
-                Debug.Log($"Mouse World Position: {worldPos}");
-                Debug.Log($"Gun Position: {transform.position}");
-                Debug.Log($"Camera Position: {mainCamera.transform.position}");
-            }
-
-            // Calculate direction to mouse position
             Vector3 direction = worldPos - transform.position;
-            
-            // Calculate angle for Z-axis rotation
             float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-            
-            if (showDebug)
-            {
-                Debug.Log($"Direction to Mouse: {direction}");
-                Debug.Log($"Rotation Angle: {angle}");
-                Debug.DrawRay(transform.position, direction, debugLineColor);
-                Debug.DrawLine(transform.position, worldPos, Color.yellow);
-            }
-
-            // Apply rotation around Z axis
             transform.rotation = Quaternion.Euler(0, 0, angle);
 
-            // Handle shooting
             if (keyBindManager != null && keyBindManager.IsShooting())
             {
                 Shoot();
             }
-        }
-        else
-        {
-            Debug.LogWarning("Main camera is null!");
         }
     }
 
@@ -100,10 +66,8 @@ public class Gun : MonoBehaviour
         gunDataSO = newGunDataSO;
         currentAmmo = gunDataSO.maxAmmo;
         
-        // Update gun model if needed
         if (gunDataSO.gunModel != null)
         {
-            // Remove old model if exists
             foreach (Transform child in transform)
             {
                 if (child != muzzlePoint)
@@ -112,7 +76,6 @@ public class Gun : MonoBehaviour
                 }
             }
             
-            // Instantiate new model
             Instantiate(gunDataSO.gunModel, transform);
         }
     }
@@ -125,23 +88,39 @@ public class Gun : MonoBehaviour
 
     public void Shoot()
     {
-        if (!CanShoot()) return;
+        if (!CanShoot())
+        {
+            return;
+        }
 
         if (!gunManager.UseAmmo(gunDataSO.ammoType))
+        {
             return;
+        }
 
-        nextFireTime = Time.time + (1f / gunDataSO.fireRate) * movementPenalty;
+        float fireRate = gunDataSO.fireRate;
+        float timeBetweenShots = 1f / fireRate;
+        nextFireTime = Time.time + timeBetweenShots * movementPenalty;
         currentAmmo--;
 
-        // Spawn bullet
-        GameObject bulletObj = LeanPool.Spawn(bulletPrefab, muzzlePoint.position, muzzlePoint.rotation);
+        Vector3 mousePos = Input.mousePosition;
+        mousePos.z = mainCamera.transform.position.y - transform.position.y;
+        Vector3 worldPos = mainCamera.ScreenToWorldPoint(mousePos);
+        Vector3 direction = (worldPos - transform.position).normalized;
+
+        if (muzzlePoint == null)
+        {
+            muzzlePoint = transform;
+        }
+
+        GameObject bulletObj = LeanPool.Spawn(bulletPrefab, muzzlePoint.position, Quaternion.identity);
+        
         Bullet bullet = bulletObj.GetComponent<Bullet>();
         if (bullet != null)
         {
-            bullet.Initialize(gunDataSO.ammoType, muzzlePoint.forward);
+            bullet.Initialize(gunDataSO.ammoType, direction);
         }
 
-        // Play effects
         if (gunDataSO.muzzleFlash != null)
         {
             gunDataSO.muzzleFlash.Play();

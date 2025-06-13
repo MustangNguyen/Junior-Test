@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Gun Data
   m_EditorClassIdentifier: 
   gunName: Gun 1
-  gunModel: {fileID: 0}
+  gunModel: {fileID: 7659690907627546758, guid: c61d935bc63ab4145825672bd89706e8, type: 3}
   damage: 10
   fireRate: 10
   maxAmmo: 1000000

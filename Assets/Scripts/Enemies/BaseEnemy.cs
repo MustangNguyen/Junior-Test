@@ -7,6 +7,7 @@ public class BaseEnemy : MonoBehaviour, IMovable, IDamageable
     [SerializeField] protected float maxHealth = 100f;
     [SerializeField] protected GameObject deathEffect;
     [SerializeField] protected GameObject hitEffect;
+    [SerializeField] protected EnemyHealthBar healthBar;
 
     protected float currentHealth;
     protected bool isDead;
@@ -19,6 +20,13 @@ public class BaseEnemy : MonoBehaviour, IMovable, IDamageable
     protected virtual void Awake()
     {
         currentHealth = maxHealth;
+
+        // Initialize health bar if available
+        if (healthBar != null)
+        {
+            healthBar.Initialize(transform);
+            healthBar.UpdateHealthBar(1f); // Full health at start
+        }
     }
 
     public virtual void TakeDamage(float damage)
@@ -31,6 +39,12 @@ public class BaseEnemy : MonoBehaviour, IMovable, IDamageable
         if (hitEffect != null)
         {
             Instantiate(hitEffect, transform.position, Quaternion.identity);
+        }
+
+        // Update health bar
+        if (healthBar != null)
+        {
+            healthBar.UpdateHealthBar(currentHealth / maxHealth);
         }
 
         // Invoke take damage event with health percentage

@@ -65,10 +65,6 @@ public class Creep : BaseEnemy
             // Calculate direction to target
             moveDirection = (target.position - transform.position).normalized;
 
-            // Rotate towards target
-            float angle = Mathf.Atan2(moveDirection.y, moveDirection.x) * Mathf.Rad2Deg;
-            Quaternion targetRotation = Quaternion.Euler(0, 0, angle);
-            transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
 
             // Check if in attack range
             if (distanceToTarget <= attackRange && canAttack)

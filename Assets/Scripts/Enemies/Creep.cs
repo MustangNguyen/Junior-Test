@@ -9,6 +9,7 @@ public class Creep : BaseEnemy
     [SerializeField] private float attackCooldown = 1f;
     [SerializeField] private float attackDamage = 10f;
     [SerializeField] private float rotationSpeed = 5f;
+    [SerializeField] private float creepMoveSpeed = 3f;
 
     [Header("References")]
     [SerializeField] private Transform target;
@@ -18,6 +19,12 @@ public class Creep : BaseEnemy
     private bool canAttack = true;
     private Vector2 moveDirection;
     private float currentSpeed;
+
+    protected override void Awake()
+    {
+        base.Awake();
+        moveSpeed = creepMoveSpeed;
+    }
 
     private void Start()
     {

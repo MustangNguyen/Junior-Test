@@ -117,12 +117,7 @@ public class Creep : BaseEnemy
 
         isAttacking = true;
 
-        // Deal damage to player if it has IDamageable component
-        IDamageable damageable = player.GetComponent<IDamageable>();
-        if (damageable != null)
-        {
-            damageable.TakeDamage(enemyData.attackDamage);
-        }
+        // TODO: Implement attack logic here
 
         isAttacking = false;
     }

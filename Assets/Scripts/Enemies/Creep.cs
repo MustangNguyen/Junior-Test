@@ -8,7 +8,6 @@ public class Creep : BaseEnemy
     [SerializeField] private float attackRange = 1f;
     [SerializeField] private float attackCooldown = 1f;
     [SerializeField] private float attackDamage = 10f;
-    [SerializeField] private float moveSpeed = 3f;
     [SerializeField] private float rotationSpeed = 5f;
 
     [Header("References")]

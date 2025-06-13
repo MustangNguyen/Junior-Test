@@ -4,7 +4,7 @@ using UnityEngine;
 
 /* Brian
 In the first game scene, create an empty Unity GameObject named EventManager and attach the EventManager.cs script to it. 
-This script is set to DontDestroyOnLoad, i.e., it won’t be destroyed when reloading scene.
+This script is set to DontDestroyOnLoad, i.e., it won't be destroyed when reloading scene.
 
 === HOW TO USE === 
 - No parameter:
@@ -90,5 +90,11 @@ public class EventManager : Singleton<EventManager>
 
 public enum EventName
 {
-
+    GamePaused,
+    GameResumed,
+    TogglePause,
+    GameOver,
+    ScoreChanged,
+    EnemyDied,
+    DamageDealt
 }

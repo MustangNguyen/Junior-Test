@@ -67,6 +67,29 @@ public class GameManager : Singleton<GameManager>
     {
         // Initialize game with MainMenu state
         ChangeState(GameState.Playing);
+
+        // Subscribe to events
+        EventManager.Instance.StartListening(EventName.TogglePause, OnTogglePause);
+    }
+
+    protected override void OnDestroy()
+    {
+        base.OnDestroy();
+        
+        // Unsubscribe from events
+        EventManager.Instance.StopListening(EventName.TogglePause, OnTogglePause);
+    }
+
+    private void OnTogglePause(Dictionary<string, object> message)
+    {
+        if (CurrentState == GameState.Playing)
+        {
+            PauseGame();
+        }
+        else if (CurrentState == GameState.Paused)
+        {
+            ResumeGame();
+        }
     }
 
     public void ChangeState(GameState newState)
@@ -87,6 +110,17 @@ public class GameManager : Singleton<GameManager>
         }
 
         CurrentState = newState;
+
+        // Trigger appropriate event
+        switch (newState)
+        {
+            case GameState.Paused:
+                EventManager.Instance.TriggerEvent(EventName.GamePaused, null);
+                break;
+            case GameState.Playing:
+                EventManager.Instance.TriggerEvent(EventName.GameResumed, null);
+                break;
+        }
     }
 
     // Public methods to change states

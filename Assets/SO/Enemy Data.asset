@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d8d5dda8028a14c4f8803a8ab3fbf40f, type: 3}
   m_Name: Enemy Data
   m_EditorClassIdentifier: 
-  maxHealth: 100
+  maxHealth: 1000
   deathEffect: {fileID: 0}
   hitEffect: {fileID: 0}
   moveSpeed: 5
@@ -21,5 +21,5 @@ MonoBehaviour:
   attackCooldown: 1
   attackRange: 2
   detectionRange: 10
-  enemySprite: {fileID: 0}
+  enemySprite: {fileID: -1656940727, guid: 3e2196ccf861e964e8d93f390ca9a9b9, type: 3}
   animatorController: {fileID: 0}

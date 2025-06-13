@@ -1,4 +1,4 @@
-  public enum GameEvent {
+public enum GameEvent {
     GameStarted,
     GamePaused,
     GameResumed,
@@ -6,4 +6,9 @@
     ScoreChanged,
     EnemyDied,
     DamageDealt
+}
+
+public enum GameState {
+    Playing,
+    Paused
 }

@@ -3,11 +3,11 @@ using UnityEngine;
 public class BulletDetector : MonoBehaviour
 {
     private Bullet bullet;
-    private CircleCollider2D detectorCollider;
+    private BoxCollider2D detectorCollider;
 
     private void Awake()
     {
-        detectorCollider = GetComponent<CircleCollider2D>();
+        detectorCollider = GetComponent<BoxCollider2D>();
     }
 
     public void Initialize(Bullet bullet)

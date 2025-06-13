@@ -9,6 +9,7 @@ public class Bullet : MonoBehaviour
     private float damage;
     private float lifetime;
     private float currentLifetime;
+    private Rigidbody2D rb;
 
     public void Initialize(AmmoDataSO data, Vector3 dir)
     {
@@ -21,17 +22,29 @@ public class Bullet : MonoBehaviour
         
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
         transform.rotation = Quaternion.Euler(0, 0, angle);
+
+        if (rb == null)
+        {
+            rb = GetComponent<Rigidbody2D>();
+        }
+        
+        if (rb != null)
+        {
+            rb.velocity = direction * speed;
+        }
     }
 
     private void OnEnable()
     {
         currentLifetime = 0f;
+        if (rb != null)
+        {
+            rb.velocity = direction * speed;
+        }
     }
 
     private void Update()
     {
-        transform.position += new Vector3(direction.x, direction.y, 0) * speed * Time.deltaTime;
-
         currentLifetime += Time.deltaTime;
         if (currentLifetime >= lifetime)
         {
@@ -71,6 +84,10 @@ public class Bullet : MonoBehaviour
 
     private void Despawn()
     {
+        if (rb != null)
+        {
+            rb.velocity = Vector2.zero;
+        }
         LeanPool.Despawn(gameObject);
     }
 } 

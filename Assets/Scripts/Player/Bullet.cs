@@ -4,142 +4,124 @@ using Lean.Pool;
 public class Bullet : MonoBehaviour
 {
     private AmmoDataSO ammoData;
-    private Vector2 direction;
     private float speed;
-    private float damage;
     private float lifetime;
-    private float currentLifetime;
+    private float damage;
+    private int maxBounces;
+    private int maxPenetration;
+    private Vector2 direction;
     private Rigidbody2D rb;
-    private int currentBounces = 0;
+    private int currentBounces;
+    private int currentPenetrations;
 
-    public void Initialize(AmmoDataSO data, Vector3 dir)
+    private void Awake()
+    {
+        rb = GetComponent<Rigidbody2D>();
+    }
+
+    public void Initialize(AmmoDataSO data, Vector2 dir)
     {
         ammoData = data;
-        direction = new Vector2(dir.x, dir.y).normalized;
         speed = data.speed;
-        damage = data.damage;
         lifetime = data.lifetime;
-        currentLifetime = 0f;
+        damage = data.damage;
+        maxBounces = data.maxBounces;
+        maxPenetration = data.maxPenetration;
+        direction = dir.normalized;
         currentBounces = 0;
-        
+        currentPenetrations = 0;
+
+        // Set rotation to match direction
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
         transform.rotation = Quaternion.Euler(0, 0, angle);
 
-        if (rb == null)
-        {
-            rb = GetComponent<Rigidbody2D>();
-        }
-        
+        // Set velocity
         if (rb != null)
         {
             rb.velocity = direction * speed;
         }
-    }
 
-    private void OnEnable()
-    {
-        currentLifetime = 0f;
-        currentBounces = 0;
-        if (rb != null)
-        {
-            rb.velocity = direction * speed;
-        }
-    }
-
-    private void Update()
-    {
-        currentLifetime += Time.deltaTime;
-        if (currentLifetime >= lifetime)
-        {
-            Despawn();
-        }
+        // Start lifetime countdown
+        Invoke(nameof(Despawn), lifetime);
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (collision.gameObject.CompareTag("Obstacle"))
-        {
-            HandleObstacleCollision(collision);
-            return;
-        }
-
-        IDamageable damageable = collision.gameObject.GetComponent<IDamageable>();
-        if (damageable != null)
-        {
-            damageable.TakeDamage(damage);
-        }
-
-        if (ammoData.impactEffect != null)
-        {
-            LeanPool.Spawn(ammoData.impactEffect, transform.position, Quaternion.identity);
-        }
-
-        if (ammoData.impactDecal != null)
-        {
-            ContactPoint2D contact = collision.GetContact(0);
-            LeanPool.Spawn(ammoData.impactDecal, contact.point, Quaternion.Euler(0, 0, Mathf.Atan2(contact.normal.y, contact.normal.x) * Mathf.Rad2Deg));
-        }
-
-        if (ammoData.impactSound != null)
-        {
-            AudioSource.PlayClipAtPoint(ammoData.impactSound, transform.position);
-        }
-
-        Despawn();
-    }
-
-    private void HandleObstacleCollision(Collision2D collision)
-    {
-        if (currentBounces >= ammoData.maxBounces)
-        {
-            Despawn();
-            return;
-        }
-
-        // Get the normal from the collision
         ContactPoint2D contact = collision.GetContact(0);
         Vector2 normal = contact.normal;
-        
-        // Calculate reflection using the surface normal
-        float dotProduct = Vector2.Dot(normal, direction);
-        direction = direction - 2 * dotProduct * normal;
-        direction.Normalize();
-        
-        // Update rotation to match new direction
-        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-        transform.rotation = Quaternion.Euler(0, 0, angle);
 
-        // Apply new velocity
-        if (rb != null)
+        // Check if hit obstacle
+        if (collision.gameObject.CompareTag("Obstacle"))
         {
-            rb.velocity = direction * speed;
-        }
+            if (currentBounces < maxBounces)
+            {
+                // Calculate reflection vector using the law of reflection: R = I - 2(N·I)N
+                Vector2 reflection = direction - 2 * Vector2.Dot(normal, direction) * normal;
+                direction = reflection.normalized;
+                currentBounces++;
 
-        // Spawn impact effects
-        if (ammoData.impactEffect != null)
+                // Update rotation to match new direction
+                float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+                transform.rotation = Quaternion.Euler(0, 0, angle);
+
+                // Update velocity
+                if (rb != null)
+                {
+                    rb.velocity = direction * speed;
+                }
+
+                // Spawn impact effect
+                if (ammoData.impactEffect != null)
+                {
+                    LeanPool.Spawn(ammoData.impactEffect, contact.point, Quaternion.identity);
+                }
+            }
+            else
+            {
+                Despawn();
+            }
+        }
+        // Check if hit enemy
+        else if (collision.gameObject.CompareTag("Enemy"))
         {
-            LeanPool.Spawn(ammoData.impactEffect, contact.point, Quaternion.identity);
-        }
+            // Deal damage to enemy
+            IDamageable damageable = collision.gameObject.GetComponent<IDamageable>();
+            if (damageable != null)
+            {
+                damageable.TakeDamage(damage);
+            }
 
-        if (ammoData.impactDecal != null)
+            // Spawn impact effect
+            if (ammoData.impactEffect != null)
+            {
+                LeanPool.Spawn(ammoData.impactEffect, contact.point, Quaternion.identity);
+            }
+
+            // Check if can penetrate
+            if (currentPenetrations < maxPenetration)
+            {
+                currentPenetrations++;
+                // Ignore collision with this enemy
+                Physics2D.IgnoreCollision(GetComponent<Collider2D>(), collision.collider);
+            }
+            else
+            {
+                Despawn();
+            }
+        }
+        else
         {
-            LeanPool.Spawn(ammoData.impactDecal, contact.point, Quaternion.Euler(0, 0, Mathf.Atan2(normal.y, normal.x) * Mathf.Rad2Deg));
+            Despawn();
         }
-
-        if (ammoData.impactSound != null)
-        {
-            AudioSource.PlayClipAtPoint(ammoData.impactSound, contact.point);
-        }
-
-        currentBounces++;
     }
 
     private void Despawn()
     {
-        if (rb != null)
-        {
-            rb.velocity = Vector2.zero;
-        }
         LeanPool.Despawn(gameObject);
+    }
+
+    private void OnDisable()
+    {
+        CancelInvoke(nameof(Despawn));
     }
 } 

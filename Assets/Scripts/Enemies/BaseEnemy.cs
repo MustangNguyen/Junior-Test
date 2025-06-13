@@ -4,17 +4,17 @@ public class BaseEnemy : MonoBehaviour, IMovable
 {
     public float moveSpeed { get; set; }
     
-    public void OnMove(Vector2 direction)
+    public virtual void OnMove(Vector2 direction)
     {
 
     }
     
-    public void Stop()
+    public virtual void Stop()
     {
         // Implement stop logic
     }
     
-    public void Rotate(Vector2 direction)
+    public virtual void Rotate(Vector2 direction)
     {
         if (direction != Vector2.zero)
         {
